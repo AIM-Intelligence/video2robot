@@ -101,6 +101,75 @@ pip install -e .
 
 For details, see [PromptHMR README](third_party/PromptHMR/README.md).
 
+## Data Download and Setup
+
+After installing the environments, you need to download the required model files and data.
+
+### Download PromptHMR Data
+
+From the `third_party/PromptHMR` directory:
+
+```bash
+cd third_party/PromptHMR
+bash scripts/fetch_data.sh
+```
+
+This script downloads:
+- PromptHMR checkpoints
+- Third-party checkpoints (camcalib, droidcalib, vitpose, SAM, SAM2, YOLO, Detectron2)
+- Dataset annotations (for evaluation)
+- Example images
+
+### Download SMPL-X and SMPL Body Models
+
+From the `third_party/PromptHMR` directory:
+
+```bash
+cd third_party/PromptHMR
+bash scripts/fetch_smplx.sh
+```
+
+This script requires registration at:
+- [SMPL-X](https://smpl-x.is.tue.mpg.de) - for SMPL-X models
+- [SMPL](https://smpl.is.tue.mpg.de) - for SMPL models
+
+The script automatically downloads, extracts, and reorganizes the models into the correct directory structure:
+- SMPL-X models → `data/body_models/smplx/`
+- SMPL models → `data/body_models/smpl/`
+- Accessory files → `data/body_models/accessory/`
+
+### Convert SMPL-X Models to Float32 (Required)
+
+**Important:** The downloaded SMPL-X models use `float64` (double precision) which can cause compatibility issues with PyTorch and other frameworks. **You must convert them to `float32` (single precision) after downloading.** This also reduces file size by ~50%.
+
+Convert downloaded models to float32:
+
+```bash
+# From the project root directory
+python scripts/convert_smplx_to_float32.py \
+    --input_dir third_party/PromptHMR/data/body_models/smplx \
+    --output_dir third_party/PromptHMR/data/body_models/smplx
+```
+
+Or convert in-place (overwrites originals - backup recommended):
+
+```bash
+# Backup before converting
+cp -r third_party/PromptHMR/data/body_models/smplx third_party/PromptHMR/data/body_models/smplx_backup
+
+# Convert in-place
+python scripts/convert_smplx_to_float32.py \
+    --input_dir third_party/PromptHMR/data/body_models/smplx \
+    --in_place
+```
+
+The conversion script:
+- Converts all `.npz` files from `float64` to `float32`
+- Converts `int64` to `int32` and `uint64` to `uint32` for consistency
+- Handles object arrays and nested structures
+- Creates compressed output files
+- Preserves original files (unless using `--in_place`)
+
 ## Usage
 
 > **Note**: Scripts automatically switch to the appropriate conda environment (`gmr` or `phmr`) as needed. Just ensure both environments are installed - no need to manually activate them.
